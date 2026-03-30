@@ -178,16 +178,34 @@ def merge_records(existing: list, new_records: list) -> list:
     return sorted(combined.values(), key=lambda x: x["date"])
 
 
+def get_latest_trading_date() -> str:
+    """從 TWSE 官方 API 取得最新交易日（最準確，當天收盤後即更新）"""
+    url = "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL"
+    try:
+        r = requests.get(url, timeout=30)
+        data = r.json()
+        if data:
+            # TWSE API 回傳的資料含有 Date 欄位，格式為 YYYYMMDD
+            date_str = data[0].get("Date", "")
+            if len(date_str) == 8:
+                return f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
+    except Exception as e:
+        log.warning("TWSE 取得交易日失敗: %s", e)
+    # fallback：用昨天（避開 yfinance 延遲）
+    yesterday = datetime.now() - timedelta(days=1)
+    return yesterday.strftime("%Y-%m-%d")
+
+
 # ── 主流程 ────────────────────────────────────────────────────────────
 
 def main():
     log.info("===== Taiwan Stock Breadth Updater (yfinance) =====")
 
-    # 決定日期區間
+    # 從 TWSE 取得最新交易日（比用 datetime.now() 更準確）
+    end_date   = get_latest_trading_date()
     today      = datetime.now()
-    end_date   = (today - timedelta(days=1)).strftime("%Y-%m-%d")
     start_date = (today - timedelta(days=FETCH_DAYS)).strftime("%Y-%m-%d")
-    log.info("資料區間：%s ~ %s", start_date, end_date)
+    log.info("資料區間：%s ~ %s（最新交易日）", start_date, end_date)
 
     # 檢查是否需要更新
     existing_ma  = load_json(MA_FILE)

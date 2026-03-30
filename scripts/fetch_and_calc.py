@@ -185,7 +185,7 @@ def main():
 
     # 決定日期區間
     today      = datetime.now()
-    end_date   = today.strftime("%Y-%m-%d")
+    end_date   = (today - timedelta(days=1)).strftime("%Y-%m-%d")
     start_date = (today - timedelta(days=FETCH_DAYS)).strftime("%Y-%m-%d")
     log.info("資料區間：%s ~ %s", start_date, end_date)
 

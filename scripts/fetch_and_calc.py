@@ -116,7 +116,10 @@ def fetch_prices(symbols: list, start_date: str, end_date: str, batch_size: int 
 # ── 核心計算 ──────────────────────────────────────────────────────────
 
 def calculate_breadth(price_df: pd.DataFrame, end_date: str) -> tuple[list, list]:
-    chart_start  = pd.Timestamp(end_date) - pd.DateOffset(years=1)
+    # 用 price_df 實際有的最後日期，不依賴傳入的 end_date
+    actual_end = price_df.index[-1]
+    log.info("yfinance 實際最新資料日期：%s", actual_end.date())
+    chart_start  = actual_end - pd.DateOffset(years=1)
     output_dates = price_df.index[price_df.index >= chart_start]
     log.info("計算區間：%s ~ %s，共 %d 個交易日", output_dates[0].date(), output_dates[-1].date(), len(output_dates))
 
@@ -211,12 +214,7 @@ def main():
     existing_ma  = load_json(MA_FILE)
     existing_52w = load_json(WEEK52_FILE)
     latest_date  = existing_ma[-1]["date"] if existing_ma else ""
-
-    if latest_date == end_date:
-        log.info("資料已是最新（%s），無需更新。", end_date)
-        return
-
-    log.info("需要更新至 %s（現有最新：%s）", end_date, latest_date or "無")
+    log.info("現有最新資料：%s，TWSE 最新交易日：%s", latest_date or "無", end_date)
 
     # 取得個股清單
     stocks  = get_stock_list()

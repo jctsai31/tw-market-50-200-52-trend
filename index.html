@@ -1,350 +1,458 @@
-"""
-Taiwan Stock Market Breadth Indicator
-每日增量更新腳本 - 由 GitHub Actions 執行
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台股市場廣度指標</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+<style>
+  :root {
+    --bg:        #0d1117;
+    --surface:   #161b22;
+    --border:    #21262d;
+    --text:      #e6edf3;
+    --muted:     #8b949e;
+    --blue:      #58a6ff;
+    --orange:    #f0883e;
+    --green:     #3fb950;
+    --red:       #f85149;
+    --accent:    #388bfd;
+  }
 
-架構：
-  - 歷史資料（2年）：yfinance 批次下載（初始化時使用）
-  - 每日增量更新：TWSE + TPEX 官方 API（當天收盤後即更新，無延遲）
-"""
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-import json
-import time
-import logging
-from datetime import datetime, timedelta
-from pathlib import Path
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+    min-height: 100vh;
+  }
 
-import requests
-import pandas as pd
-import yfinance as yf
+  header {
+    padding: 28px 32px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
-log = logging.getLogger(__name__)
+  header h1 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
 
-DATA_DIR    = Path(__file__).parent.parent / "data"
-DATA_DIR.mkdir(exist_ok=True)
+  #last-update {
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
 
-MA_FILE     = DATA_DIR / "breadth_ma.json"
-WEEK52_FILE = DATA_DIR / "breadth_52week.json"
+  #status-badge {
+    font-size: 0.75rem;
+    padding: 2px 10px;
+    border-radius: 12px;
+    background: #1f3a2b;
+    color: var(--green);
+    border: 1px solid #2ea04326;
+    display: none;
+  }
 
-FETCH_DAYS = 730   # yfinance 歷史資料抓取天數
+  main {
+    padding: 24px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
 
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
 
-# ══════════════════════════════════════════════════════════════
-#  TWSE / TPEX 官方 API
-# ══════════════════════════════════════════════════════════════
+  .chart-header {
+    padding: 18px 24px 14px;
+    border-bottom: 1px solid var(--border);
+  }
 
-def fetch_twse_today() -> tuple[str, dict]:
-    """
-    從 TWSE 官方 API 取得今日所有上市股票收盤價。
-    回傳 (date_str, {stock_id: close_price})
-    """
-    url = "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL"
-    try:
-        r = requests.get(url, timeout=30)
-        data = r.json()
-        if not data:
-            return "", {}
+  .chart-header h2 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
 
-        # 取得日期（格式 YYYYMMDD）
-        date_raw = data[0].get("Date", "")
-        if len(date_raw) == 8:
-            date_str = f"{date_raw[:4]}-{date_raw[4:6]}-{date_raw[6:]}"
-        else:
-            return "", {}
+  .chart-header p {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
 
-        # 取得收盤價（只保留 4 碼純數字普通股）
-        prices = {}
-        for s in data:
-            code = s.get("Code", "")
-            if not code or not code.isdigit() or len(code) != 4:
-                continue
-            try:
-                close = float(s.get("ClosingPrice", "").replace(",", ""))
-                if close > 0:
-                    prices[code] = close
-            except (ValueError, AttributeError):
-                continue
+  .legend-row {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
 
-        log.info("TWSE 上市：日期 %s，取得 %d 筆收盤價", date_str, len(prices))
-        return date_str, prices
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
 
-    except Exception as e:
-        log.error("TWSE API 失敗: %s", e)
-        return "", {}
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
 
+  .chart-wrap {
+    width: 100%;
+    height: 320px;
+  }
 
-def fetch_tpex_today() -> tuple[str, dict]:
-    """
-    從 TPEX 官方 API 取得今日所有上櫃股票收盤價。
-    回傳 (date_str, {stock_id: close_price})
-    """
-    url = "https://www.tpex.org.tw/openapi/v1/tpex_mainboard_quotes"
-    try:
-        r = requests.get(url, timeout=30)
-        data = r.json()
-        if not data:
-            return "", {}
+  .stat-row {
+    display: flex;
+    gap: 0;
+    border-top: 1px solid var(--border);
+  }
 
-        # 取得日期（欄位名稱可能是 Date 或 date）
-        date_raw = data[0].get("Date", data[0].get("date", ""))
-        # TPEX 日期格式可能是 YYYY/MM/DD 或 YYYYMMDD
-        date_str = ""
-        if "/" in date_raw:
-            parts = date_raw.split("/")
-            if len(parts) == 3:
-                date_str = f"{parts[0]}-{parts[1].zfill(2)}-{parts[2].zfill(2)}"
-        elif len(date_raw) == 8 and date_raw.isdigit():
-            date_str = f"{date_raw[:4]}-{date_raw[4:6]}-{date_raw[6:]}"
+  .stat-item {
+    flex: 1;
+    padding: 14px 20px;
+    border-right: 1px solid var(--border);
+  }
+  .stat-item:last-child { border-right: none; }
 
-        prices = {}
-        for s in data:
-            code = s.get("SecuritiesCompanyCode", "")
-            if not code or not code.isdigit() or len(code) != 4:
-                continue
-            try:
-                close = float(s.get("Close", "").replace(",", ""))
-                if close > 0:
-                    prices[code] = close
-            except (ValueError, AttributeError):
-                continue
+  .stat-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
 
-        log.info("TPEX 上櫃：日期 %s，取得 %d 筆收盤價", date_str, len(prices))
-        return date_str, prices
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
 
-    except Exception as e:
-        log.error("TPEX API 失敗: %s", e)
-        return "", {}
+  .stat-sub {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
 
+  #loading {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 100;
+  }
 
-# ══════════════════════════════════════════════════════════════
-#  yfinance 歷史資料（初始化用）
-# ══════════════════════════════════════════════════════════════
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
 
-def get_stock_list_for_yf() -> list[str]:
-    """取得所有上市+上櫃 4 碼股票的 yfinance 代號"""
-    symbols = []
-    try:
-        r = requests.get("https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL", timeout=30)
-        for s in r.json():
-            code = s.get("Code", "")
-            if code.isdigit() and len(code) == 4:
-                symbols.append(code + ".TW")
-    except Exception as e:
-        log.warning("TWSE 清單失敗: %s", e)
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-    try:
-        r = requests.get("https://www.tpex.org.tw/openapi/v1/tpex_mainboard_quotes", timeout=30)
-        for s in r.json():
-            code = s.get("SecuritiesCompanyCode", "")
-            if code.isdigit() and len(code) == 4:
-                symbols.append(code + ".TWO")
-    except Exception as e:
-        log.warning("TPEX 清單失敗: %s", e)
+  #loading p { font-size: 0.85rem; color: var(--muted); }
 
-    log.info("yfinance 代號清單：%d 支", len(symbols))
-    return symbols
+  #error-msg {
+    display: none;
+    padding: 20px 32px;
+    color: var(--red);
+    font-size: 0.85rem;
+  }
 
+  @media (max-width: 600px) {
+    header, main { padding: 16px; }
+    .chart-wrap { height: 260px; }
+    .stat-row { flex-wrap: wrap; }
+    .stat-item { min-width: 50%; }
+  }
+</style>
+</head>
+<body>
 
-def fetch_history_yfinance(symbols: list, start_date: str, end_date: str) -> pd.DataFrame:
-    """用 yfinance 批次下載歷史收盤價"""
-    all_close = {}
-    batch_size = 100
+<div id="loading">
+  <div class="spinner"></div>
+  <p>載入資料中…</p>
+</div>
 
-    for i in range(0, len(symbols), batch_size):
-        batch = symbols[i:i + batch_size]
-        try:
-            raw = yf.download(
-                " ".join(batch),
-                start=start_date,
-                end=end_date,
-                auto_adjust=True,
-                progress=False,
-                threads=True,
-            )
-            if isinstance(raw.columns, pd.MultiIndex):
-                close_df = raw["Close"]
-            else:
-                close_df = raw[["Close"]]
-                close_df.columns = batch
+<div id="error-msg"></div>
 
-            for sym in batch:
-                if sym in close_df.columns:
-                    s = close_df[sym].dropna()
-                    if len(s) > 50:
-                        all_close[sym] = s
-        except Exception as e:
-            log.warning("批次 %d 失敗: %s", i // batch_size + 1, e)
+<header>
+  <h1>台股市場廣度指標</h1>
+  <span id="last-update"></span>
+  <span id="status-badge">● 即時</span>
+</header>
 
-        done = min(i + batch_size, len(symbols))
-        if done % 500 == 0 or done == len(symbols):
-            log.info("yfinance 下載進度：%d / %d，成功 %d 支", done, len(symbols), len(all_close))
-        time.sleep(0.5)
+<main>
+  <!-- 圖一：MA 穿越 -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <h2>均線廣度 — 收盤價 &gt; 50MA / 200MA 個股數</h2>
+      <p>統計每日收盤價高於自身 50 日或 200 日均線的個股總數（不含 ETF、特別股、基金）</p>
+      <div class="legend-row">
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--blue)"></div>
+          <span>收盤 &gt; 50MA</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--orange)"></div>
+          <span>收盤 &gt; 200MA</span>
+        </div>
+      </div>
+    </div>
+    <div class="chart-wrap" id="chart-ma"></div>
+    <div class="stat-row">
+      <div class="stat-item">
+        <div class="stat-label">最新日期</div>
+        <div class="stat-value" id="ma-date" style="font-size:1rem">—</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">高於 50MA</div>
+        <div class="stat-value" id="ma-above50" style="color:var(--blue)">—</div>
+        <div class="stat-sub" id="ma-pct50">— %</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">高於 200MA</div>
+        <div class="stat-value" id="ma-above200" style="color:var(--orange)">—</div>
+        <div class="stat-sub" id="ma-pct200">— %</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">納入個股數</div>
+        <div class="stat-value" id="ma-total" style="font-size:1.1rem">—</div>
+      </div>
+    </div>
+  </div>
 
-    return pd.DataFrame(all_close).sort_index()
+  <!-- 圖二：52週新高低 -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <h2>52 週新高低 — 創新高 / 新低個股數</h2>
+      <p>統計每日收盤價創近 52 週（252 個交易日）新高或新低的個股總數</p>
+      <div class="legend-row">
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--green)"></div>
+          <span>52 週新高</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--red)"></div>
+          <span>52 週新低</span>
+        </div>
+      </div>
+    </div>
+    <div class="chart-wrap" id="chart-52w"></div>
+    <div class="stat-row">
+      <div class="stat-item">
+        <div class="stat-label">最新日期</div>
+        <div class="stat-value" id="w52-date" style="font-size:1rem">—</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">52 週新高</div>
+        <div class="stat-value" id="w52-high" style="color:var(--green)">—</div>
+        <div class="stat-sub" id="w52-pct-high">— %</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">52 週新低</div>
+        <div class="stat-value" id="w52-low" style="color:var(--red)">—</div>
+        <div class="stat-sub" id="w52-pct-low">— %</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">納入個股數</div>
+        <div class="stat-value" id="w52-total" style="font-size:1.1rem">—</div>
+      </div>
+    </div>
+  </div>
+</main>
 
+<script>
+const COLORS = {
+  blue:   '#58a6ff',
+  orange: '#f0883e',
+  green:  '#3fb950',
+  red:    '#f85149',
+  grid:   '#21262d',
+  text:   '#8b949e',
+  tooltip:'#1c2128',
+};
 
-# ══════════════════════════════════════════════════════════════
-#  廣度指標計算
-# ══════════════════════════════════════════════════════════════
+// ── 取最近一年資料 ───────────────────────────────────────────────────
+function filterLastYear(records) {
+  const now   = new Date();
+  const oneYr = new Date(now);
+  oneYr.setFullYear(oneYr.getFullYear() - 1);
+  return records.filter(r => new Date(r.date) >= oneYr);
+}
 
-def calc_one_day(price_df: pd.DataFrame, dt: pd.Timestamp) -> tuple[dict, dict]:
-    """計算單一交易日的廣度指標"""
-    loc = price_df.index.get_loc(dt)
+// ── 通用 ECharts option ──────────────────────────────────────────────
+function buildOption(dates, series) {
+  return {
+    backgroundColor: 'transparent',
+    grid: { top: 20, right: 20, bottom: 60, left: 60, containLabel: false },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: COLORS.tooltip,
+      borderColor: '#30363d',
+      borderWidth: 1,
+      textStyle: { color: '#e6edf3', fontSize: 12 },
+      axisPointer: { lineStyle: { color: '#388bfd44' } },
+    },
+    xAxis: {
+      type: 'category',
+      data: dates,
+      axisLine:  { lineStyle: { color: COLORS.grid } },
+      axisTick:  { show: false },
+      axisLabel: {
+        color: COLORS.text,
+        fontSize: 11,
+        rotate: 0,
+        formatter: v => v.slice(0, 7),   // YYYY-MM
+        interval: 'auto',
+      },
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: { lineStyle: { color: COLORS.grid, type: 'dashed' } },
+      axisLabel: { color: COLORS.text, fontSize: 11 },
+    },
+    dataZoom: [
+      {
+        type: 'slider',
+        bottom: 4,
+        height: 22,
+        borderColor: COLORS.grid,
+        fillerColor: '#388bfd18',
+        handleStyle: { color: '#388bfd' },
+        textStyle: { color: COLORS.text },
+        start: 0, end: 100,
+      },
+      { type: 'inside' },
+    ],
+    series,
+  };
+}
 
-    # MA
-    w50  = price_df.iloc[max(0, loc - 49):loc + 1]
-    w200 = price_df.iloc[max(0, loc - 199):loc + 1]
-    close_today = price_df.loc[dt]
-    ma50  = w50.mean()
-    ma200 = w200.mean()
-    valid = close_today.notna() & ma50.notna() & ma200.notna()
-    ma_rec = {
-        "date":       dt.strftime("%Y-%m-%d"),
-        "above50ma":  int((close_today[valid] > ma50[valid]).sum()),
-        "above200ma": int((close_today[valid] > ma200[valid]).sum()),
-        "total":      int(valid.sum()),
+function makeSeries(name, data, color) {
+  return {
+    name,
+    type: 'line',
+    data,
+    smooth: 0.3,
+    symbol: 'none',
+    lineStyle: { color, width: 1.8 },
+    areaStyle: {
+      color: {
+        type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+        colorStops: [
+          { offset: 0, color: color + '28' },
+          { offset: 1, color: color + '00' },
+        ],
+      },
+    },
+  };
+}
+
+// ── 更新統計數字卡 ───────────────────────────────────────────────────
+function updateStats(last, ids, colorKeys) {
+  document.getElementById(ids.date).textContent  = last.date;
+  document.getElementById(ids.v1).textContent    = last[ids.k1].toLocaleString();
+  document.getElementById(ids.v2).textContent    = last[ids.k2].toLocaleString();
+  document.getElementById(ids.tot).textContent   = last.total.toLocaleString();
+  document.getElementById(ids.p1).textContent    = (last[ids.k1] / last.total * 100).toFixed(1) + ' %';
+  document.getElementById(ids.p2).textContent    = (last[ids.k2] / last.total * 100).toFixed(1) + ' %';
+}
+
+// ── 主程式 ───────────────────────────────────────────────────────────
+async function main() {
+  try {
+    const [maRaw, w52Raw] = await Promise.all([
+      fetch('data/breadth_ma.json').then(r => { if (!r.ok) throw new Error('MA data not found'); return r.json(); }),
+      fetch('data/breadth_52week.json').then(r => { if (!r.ok) throw new Error('52w data not found'); return r.json(); }),
+    ]);
+
+    const ma  = filterLastYear(maRaw);
+    const w52 = filterLastYear(w52Raw);
+
+    // 隱藏 loading
+    document.getElementById('loading').style.display = 'none';
+
+    // 最後更新時間
+    const lastDate = ma.at(-1)?.date ?? '';
+    document.getElementById('last-update').textContent = lastDate ? `最後更新：${lastDate}` : '';
+
+    // ── 圖一：MA ──
+    const maDates   = ma.map(r => r.date);
+    const chartMA   = echarts.init(document.getElementById('chart-ma'));
+    chartMA.setOption(buildOption(maDates, [
+      makeSeries('收盤 > 50MA',  ma.map(r => r.above50ma),  COLORS.blue),
+      makeSeries('收盤 > 200MA', ma.map(r => r.above200ma), COLORS.orange),
+    ]));
+
+    const lastMA = ma.at(-1);
+    if (lastMA) {
+      document.getElementById('ma-date').textContent    = lastMA.date;
+      document.getElementById('ma-above50').textContent = lastMA.above50ma.toLocaleString();
+      document.getElementById('ma-above200').textContent= lastMA.above200ma.toLocaleString();
+      document.getElementById('ma-total').textContent   = lastMA.total.toLocaleString();
+      document.getElementById('ma-pct50').textContent   = (lastMA.above50ma  / lastMA.total * 100).toFixed(1) + ' %';
+      document.getElementById('ma-pct200').textContent  = (lastMA.above200ma / lastMA.total * 100).toFixed(1) + ' %';
     }
 
-    # 52週
-    w52w = price_df.iloc[max(0, loc - 251):loc + 1]
-    h52w = w52w.max()
-    l52w = w52w.min()
-    v52  = close_today.notna() & h52w.notna() & l52w.notna()
-    w52_rec = {
-        "date":    dt.strftime("%Y-%m-%d"),
-        "high52w": int((close_today[v52] >= h52w[v52]).sum()),
-        "low52w":  int((close_today[v52] <= l52w[v52]).sum()),
-        "total":   int(v52.sum()),
+    // ── 圖二：52週 ──
+    const w52Dates  = w52.map(r => r.date);
+    const chart52w  = echarts.init(document.getElementById('chart-52w'));
+    chart52w.setOption(buildOption(w52Dates, [
+      makeSeries('52週新高', w52.map(r => r.high52w), COLORS.green),
+      makeSeries('52週新低', w52.map(r => r.low52w),  COLORS.red),
+    ]));
+
+    const lastW52 = w52.at(-1);
+    if (lastW52) {
+      document.getElementById('w52-date').textContent     = lastW52.date;
+      document.getElementById('w52-high').textContent     = lastW52.high52w.toLocaleString();
+      document.getElementById('w52-low').textContent      = lastW52.low52w.toLocaleString();
+      document.getElementById('w52-total').textContent    = lastW52.total.toLocaleString();
+      document.getElementById('w52-pct-high').textContent = (lastW52.high52w / lastW52.total * 100).toFixed(1) + ' %';
+      document.getElementById('w52-pct-low').textContent  = (lastW52.low52w  / lastW52.total * 100).toFixed(1) + ' %';
     }
 
-    return ma_rec, w52_rec
+    // RWD resize
+    window.addEventListener('resize', () => {
+      chartMA.resize();
+      chart52w.resize();
+    });
 
+  } catch (err) {
+    document.getElementById('loading').style.display = 'none';
+    const errEl = document.getElementById('error-msg');
+    errEl.style.display = 'block';
+    errEl.textContent = `⚠️ 無法載入資料：${err.message}。請確認 data/ 資料夾中的 JSON 檔案存在。`;
+    console.error(err);
+  }
+}
 
-def calculate_breadth_full(price_df: pd.DataFrame) -> tuple[list, list]:
-    """計算 price_df 最後 1 年所有交易日的廣度指標"""
-    actual_end   = price_df.index[-1]
-    chart_start  = actual_end - pd.DateOffset(years=1)
-    output_dates = price_df.index[price_df.index >= chart_start]
-    log.info("計算區間：%s ~ %s，共 %d 個交易日",
-             output_dates[0].date(), output_dates[-1].date(), len(output_dates))
-
-    ma_records, week52_records = [], []
-    for n, dt in enumerate(output_dates):
-        ma_rec, w52_rec = calc_one_day(price_df, dt)
-        ma_records.append(ma_rec)
-        week52_records.append(w52_rec)
-
-    log.info("計算完成，共 %d 筆", len(ma_records))
-    return ma_records, week52_records
-
-
-# ══════════════════════════════════════════════════════════════
-#  JSON 讀寫
-# ══════════════════════════════════════════════════════════════
-
-def load_json(path: Path) -> list:
-    if path.exists():
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return []
-
-
-def save_json(path: Path, records: list):
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(records, f, ensure_ascii=False, indent=2)
-    log.info("已儲存 %s（%d 筆）", path.name, len(records))
-
-
-def merge_records(existing: list, new_records: list) -> list:
-    combined = {r["date"]: r for r in existing}
-    for r in new_records:
-        combined[r["date"]] = r
-    return sorted(combined.values(), key=lambda x: x["date"])
-
-
-# ══════════════════════════════════════════════════════════════
-#  主流程
-# ══════════════════════════════════════════════════════════════
-
-def main():
-    log.info("===== Taiwan Stock Breadth Updater =====")
-
-    # ── Step 1：從 TWSE/TPEX 取得今日收盤價 ──
-    twse_date, twse_prices = fetch_twse_today()
-    tpex_date, tpex_prices = fetch_tpex_today()
-
-    # 確認今日交易日期
-    today_date = twse_date or tpex_date
-    if not today_date:
-        log.error("無法取得今日交易日期，結束。")
-        return
-    log.info("今日交易日：%s", today_date)
-
-    # ── Step 2：讀取既有資料 ──
-    existing_ma  = load_json(MA_FILE)
-    existing_52w = load_json(WEEK52_FILE)
-    latest_date  = existing_ma[-1]["date"] if existing_ma else ""
-    log.info("現有最新資料：%s", latest_date or "無")
-
-    if latest_date == today_date:
-        log.info("資料已是最新（%s），無需更新。", today_date)
-        return
-
-    # ── Step 3：用 yfinance 抓歷史資料建立 price_df ──
-    # 需要 2 年歷史才能算 200MA 和 52 週新高低
-    today      = datetime.now()
-    start_date = (today - timedelta(days=FETCH_DAYS)).strftime("%Y-%m-%d")
-    end_date   = today.strftime("%Y-%m-%d")
-
-    symbols  = get_stock_list_for_yf()
-    price_df = fetch_history_yfinance(symbols, start_date, end_date)
-
-    if price_df.empty:
-        log.error("yfinance 無法取得歷史資料，結束。")
-        return
-    log.info("yfinance 歷史資料：%d 個交易日 × %d 支個股", *price_df.shape)
-
-    # ── Step 4：用今日 TWSE/TPEX 收盤價覆蓋/新增最新一天 ──
-    # 合併上市+上櫃收盤價（轉成 yfinance 代號格式）
-    today_prices = {}
-    for code, price in twse_prices.items():
-        today_prices[code + ".TW"] = price
-    for code, price in tpex_prices.items():
-        today_prices[code + ".TWO"] = price
-
-    log.info("今日 TWSE+TPEX 收盤價：%d 支", len(today_prices))
-
-    # 建立今日資料列，只填入 price_df 中有的欄位
-    today_ts = pd.Timestamp(today_date)
-    today_row = pd.Series(
-        {sym: today_prices[sym] for sym in price_df.columns if sym in today_prices},
-        name=today_ts
-    )
-
-    # 如果 price_df 已有今日資料就覆蓋，否則新增
-    if today_ts in price_df.index:
-        price_df.loc[today_ts] = today_row
-        log.info("覆蓋 yfinance 今日資料（%s）", today_date)
-    else:
-        price_df = pd.concat([price_df, today_row.to_frame().T])
-        price_df = price_df.sort_index()
-        log.info("新增今日資料（%s）到 price_df", today_date)
-
-    log.info("更新後 price_df 最新日期：%s", price_df.index[-1].date())
-
-    # ── Step 5：計算廣度指標 ──
-    ma_records, week52_records = calculate_breadth_full(price_df)
-
-    # ── Step 6：合併並儲存 ──
-    save_json(MA_FILE,     merge_records(existing_ma,  ma_records))
-    save_json(WEEK52_FILE, merge_records(existing_52w, week52_records))
-
-    log.info("===== 更新完成（%s）=====", today_date)
-
-
-if __name__ == "__main__":
-    main()
+main();
+</script>
+</body>
+</html>

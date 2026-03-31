@@ -1462,5 +1462,17 @@
     "above50ma": 740,
     "above200ma": 902,
     "total": 1953
+  },
+  {
+    "date": "2026-03-30",
+    "above50ma": 671,
+    "above200ma": 853,
+    "total": 1955
+  },
+  {
+    "date": "2026-03-31",
+    "above50ma": 607,
+    "above200ma": 808,
+    "total": 1937
   }
 ]

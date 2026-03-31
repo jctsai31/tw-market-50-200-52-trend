@@ -51,10 +51,9 @@ def fetch_twse_today() -> tuple[str, dict]:
 
         # 取得日期（格式 YYYYMMDD）
         date_raw = data[0].get("Date", "")
-        if len(date_raw) == 8:
+        date_str = ""
+        if len(date_raw) == 8 and date_raw.isdigit():
             date_str = f"{date_raw[:4]}-{date_raw[4:6]}-{date_raw[6:]}"
-        else:
-            return "", {}
 
         # 取得收盤價（只保留 4 碼純數字普通股）
         prices = {}
@@ -69,7 +68,7 @@ def fetch_twse_today() -> tuple[str, dict]:
             except (ValueError, AttributeError):
                 continue
 
-        log.info("TWSE 上市：日期 %s，取得 %d 筆收盤價", date_str, len(prices))
+        log.info("TWSE 上市：日期 %s，取得 %d 筆收盤價", date_str or "未取得", len(prices))
         return date_str, prices
 
     except Exception as e:
@@ -91,7 +90,6 @@ def fetch_tpex_today() -> tuple[str, dict]:
 
         # 取得日期（欄位名稱可能是 Date 或 date）
         date_raw = data[0].get("Date", data[0].get("date", ""))
-        # TPEX 日期格式可能是 YYYY/MM/DD 或 YYYYMMDD
         date_str = ""
         if "/" in date_raw:
             parts = date_raw.split("/")
@@ -112,7 +110,7 @@ def fetch_tpex_today() -> tuple[str, dict]:
             except (ValueError, AttributeError):
                 continue
 
-        log.info("TPEX 上櫃：日期 %s，取得 %d 筆收盤價", date_str, len(prices))
+        log.info("TPEX 上櫃：日期 %s，取得 %d 筆收盤價", date_str or "未取得", len(prices))
         return date_str, prices
 
     except Exception as e:
@@ -278,11 +276,19 @@ def main():
     tpex_date, tpex_prices = fetch_tpex_today()
 
     # 確認今日交易日期
+    # 優先用 TWSE 日期，其次 TPEX，最後 fallback 用今天
+    today = datetime.now()
     today_date = twse_date or tpex_date
     if not today_date:
-        log.error("無法取得今日交易日期，結束。")
-        return
-    log.info("今日交易日：%s", today_date)
+        # API 日期空白（可能還在開盤中或非交易日）
+        # 用今天日期，若今天是假日則往前找最近交易日
+        d = today
+        while d.weekday() >= 5:   # 跳過週六(5)、週日(6)
+            d -= timedelta(days=1)
+        today_date = d.strftime("%Y-%m-%d")
+        log.info("API 未回傳日期，使用推算交易日：%s", today_date)
+    else:
+        log.info("今日交易日：%s", today_date)
 
     # ── Step 2：讀取既有資料 ──
     existing_ma  = load_json(MA_FILE)
@@ -295,8 +301,6 @@ def main():
         return
 
     # ── Step 3：用 yfinance 抓歷史資料建立 price_df ──
-    # 需要 2 年歷史才能算 200MA 和 52 週新高低
-    today      = datetime.now()
     start_date = (today - timedelta(days=FETCH_DAYS)).strftime("%Y-%m-%d")
     end_date   = today.strftime("%Y-%m-%d")
 

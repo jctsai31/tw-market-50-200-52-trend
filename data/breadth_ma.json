@@ -1423,19 +1423,19 @@
   },
   {
     "date": "2026-03-19",
-    "above50ma": 821,
+    "above50ma": 822,
     "above200ma": 914,
     "total": 1955
   },
   {
     "date": "2026-03-20",
-    "above50ma": 833,
+    "above50ma": 834,
     "above200ma": 923,
     "total": 1954
   },
   {
     "date": "2026-03-23",
-    "above50ma": 701,
+    "above50ma": 702,
     "above200ma": 860,
     "total": 1954
   },
@@ -1447,50 +1447,56 @@
   },
   {
     "date": "2026-03-25",
-    "above50ma": 787,
+    "above50ma": 788,
     "above200ma": 911,
     "total": 1955
   },
   {
     "date": "2026-03-26",
-    "above50ma": 762,
-    "above200ma": 892,
+    "above50ma": 764,
+    "above200ma": 894,
     "total": 1956
   },
   {
     "date": "2026-03-27",
-    "above50ma": 739,
-    "above200ma": 902,
+    "above50ma": 741,
+    "above200ma": 905,
     "total": 1952
   },
   {
     "date": "2026-03-30",
-    "above50ma": 670,
-    "above200ma": 853,
+    "above50ma": 672,
+    "above200ma": 856,
     "total": 1954
   },
   {
     "date": "2026-03-31",
-    "above50ma": 536,
-    "above200ma": 758,
+    "above50ma": 537,
+    "above200ma": 760,
     "total": 1954
   },
   {
     "date": "2026-04-01",
-    "above50ma": 665,
-    "above200ma": 837,
+    "above50ma": 667,
+    "above200ma": 841,
     "total": 1956
   },
   {
     "date": "2026-04-02",
-    "above50ma": 628,
-    "above200ma": 804,
+    "above50ma": 629,
+    "above200ma": 806,
     "total": 1955
   },
   {
     "date": "2026-04-03",
     "above50ma": 617,
     "above200ma": 797,
+    "total": 1931
+  },
+  {
+    "date": "2026-04-06",
+    "above50ma": 618,
+    "above200ma": 799,
     "total": 1931
   }
 ]

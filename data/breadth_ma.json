@@ -1681,8 +1681,14 @@
   },
   {
     "date": "2026-05-19",
-    "above50ma": 873,
-    "above200ma": 892,
-    "total": 1947
+    "above50ma": 865,
+    "above200ma": 904,
+    "total": 1965
+  },
+  {
+    "date": "2026-05-20",
+    "above50ma": 859,
+    "above200ma": 911,
+    "total": 1944
   }
 ]

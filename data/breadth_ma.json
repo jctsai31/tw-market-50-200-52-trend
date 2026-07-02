@@ -391,25 +391,25 @@
   },
   {
     "date": "2025-07-02",
-    "above50ma": 963,
+    "above50ma": 964,
     "above200ma": 582,
     "total": 1970
   },
   {
     "date": "2025-07-03",
-    "above50ma": 1058,
+    "above50ma": 1059,
     "above200ma": 605,
     "total": 1969
   },
   {
     "date": "2025-07-04",
-    "above50ma": 842,
+    "above50ma": 843,
     "above200ma": 567,
     "total": 1970
   },
   {
     "date": "2025-07-07",
-    "above50ma": 768,
+    "above50ma": 769,
     "above200ma": 547,
     "total": 1970
   },
@@ -463,13 +463,13 @@
   },
   {
     "date": "2025-07-18",
-    "above50ma": 936,
+    "above50ma": 937,
     "above200ma": 625,
     "total": 1969
   },
   {
     "date": "2025-07-21",
-    "above50ma": 943,
+    "above50ma": 944,
     "above200ma": 630,
     "total": 1970
   },
@@ -481,25 +481,25 @@
   },
   {
     "date": "2025-07-23",
-    "above50ma": 938,
+    "above50ma": 939,
     "above200ma": 610,
     "total": 1970
   },
   {
     "date": "2025-07-24",
-    "above50ma": 957,
+    "above50ma": 958,
     "above200ma": 627,
     "total": 1970
   },
   {
     "date": "2025-07-25",
-    "above50ma": 954,
+    "above50ma": 955,
     "above200ma": 612,
     "total": 1970
   },
   {
     "date": "2025-07-28",
-    "above50ma": 985,
+    "above50ma": 986,
     "above200ma": 622,
     "total": 1969
   },
@@ -511,13 +511,13 @@
   },
   {
     "date": "2025-07-30",
-    "above50ma": 968,
+    "above50ma": 969,
     "above200ma": 618,
     "total": 1970
   },
   {
     "date": "2025-07-31",
-    "above50ma": 899,
+    "above50ma": 900,
     "above200ma": 590,
     "total": 1970
   },
@@ -529,7 +529,7 @@
   },
   {
     "date": "2025-08-04",
-    "above50ma": 1064,
+    "above50ma": 1065,
     "above200ma": 657,
     "total": 1969
   },
@@ -590,43 +590,43 @@
   {
     "date": "2025-08-18",
     "above50ma": 1180,
-    "above200ma": 812,
+    "above200ma": 813,
     "total": 1971
   },
   {
     "date": "2025-08-19",
     "above50ma": 1159,
-    "above200ma": 802,
+    "above200ma": 803,
     "total": 1971
   },
   {
     "date": "2025-08-20",
     "above50ma": 1026,
-    "above200ma": 724,
+    "above200ma": 725,
     "total": 1971
   },
   {
     "date": "2025-08-21",
     "above50ma": 1127,
-    "above200ma": 789,
+    "above200ma": 790,
     "total": 1971
   },
   {
     "date": "2025-08-22",
     "above50ma": 1102,
-    "above200ma": 774,
+    "above200ma": 775,
     "total": 1971
   },
   {
     "date": "2025-08-25",
     "above50ma": 1147,
-    "above200ma": 810,
+    "above200ma": 811,
     "total": 1971
   },
   {
     "date": "2025-08-26",
     "above50ma": 1152,
-    "above200ma": 815,
+    "above200ma": 816,
     "total": 1971
   },
   {
@@ -722,7 +722,7 @@
   {
     "date": "2025-09-17",
     "above50ma": 1072,
-    "above200ma": 886,
+    "above200ma": 887,
     "total": 1971
   },
   {
@@ -1867,8 +1867,14 @@
   },
   {
     "date": "2026-07-01",
-    "above50ma": 1034,
-    "above200ma": 1102,
-    "total": 1964
+    "above50ma": 1050,
+    "above200ma": 1103,
+    "total": 1977
+  },
+  {
+    "date": "2026-07-02",
+    "above50ma": 1092,
+    "above200ma": 1109,
+    "total": 1957
   }
 ]

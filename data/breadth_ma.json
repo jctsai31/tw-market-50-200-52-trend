@@ -2005,14 +2005,20 @@
   },
   {
     "date": "2026-08-03",
-    "above50ma": 498,
-    "above200ma": 847,
-    "total": 1977
+    "above50ma": 502,
+    "above200ma": 851,
+    "total": 1980
   },
   {
     "date": "2026-08-04",
-    "above50ma": 524,
-    "above200ma": 880,
-    "total": 1951
+    "above50ma": 533,
+    "above200ma": 900,
+    "total": 1972
+  },
+  {
+    "date": "2026-08-05",
+    "above50ma": 554,
+    "above200ma": 923,
+    "total": 1962
   }
 ]

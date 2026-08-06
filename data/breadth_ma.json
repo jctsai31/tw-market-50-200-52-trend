@@ -715,7 +715,7 @@
   },
   {
     "date": "2025-09-16",
-    "above50ma": 1090,
+    "above50ma": 1091,
     "above200ma": 882,
     "total": 1972
   },
@@ -1100,7 +1100,7 @@
   {
     "date": "2025-12-19",
     "above50ma": 840,
-    "above200ma": 856,
+    "above200ma": 857,
     "total": 1976
   },
   {
@@ -1117,7 +1117,7 @@
   },
   {
     "date": "2025-12-24",
-    "above50ma": 916,
+    "above50ma": 915,
     "above200ma": 876,
     "total": 1977
   },
@@ -2011,14 +2011,20 @@
   },
   {
     "date": "2026-08-04",
-    "above50ma": 533,
-    "above200ma": 900,
-    "total": 1972
+    "above50ma": 535,
+    "above200ma": 907,
+    "total": 1980
   },
   {
     "date": "2026-08-05",
-    "above50ma": 554,
-    "above200ma": 923,
-    "total": 1962
+    "above50ma": 598,
+    "above200ma": 951,
+    "total": 1980
+  },
+  {
+    "date": "2026-08-06",
+    "above50ma": 592,
+    "above200ma": 950,
+    "total": 1953
   }
 ]

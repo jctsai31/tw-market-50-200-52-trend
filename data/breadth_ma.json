@@ -1100,7 +1100,7 @@
   {
     "date": "2025-12-19",
     "above50ma": 840,
-    "above200ma": 855,
+    "above200ma": 856,
     "total": 1975
   },
   {
@@ -2101,14 +2101,20 @@
   },
   {
     "date": "2026-08-25",
-    "above50ma": 771,
-    "above200ma": 986,
-    "total": 1970
+    "above50ma": 777,
+    "above200ma": 993,
+    "total": 1978
   },
   {
     "date": "2026-08-26",
-    "above50ma": 768,
-    "above200ma": 986,
-    "total": 1949
+    "above50ma": 881,
+    "above200ma": 1036,
+    "total": 1970
+  },
+  {
+    "date": "2026-08-27",
+    "above50ma": 913,
+    "above200ma": 1045,
+    "total": 1959
   }
 ]

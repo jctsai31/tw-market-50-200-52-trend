@@ -991,7 +991,7 @@
   },
   {
     "date": "2025-11-25",
-    "above50ma": 533,
+    "above50ma": 534,
     "above200ma": 713,
     "total": 1975
   },
@@ -1028,13 +1028,13 @@
   {
     "date": "2025-12-03",
     "above50ma": 818,
-    "above200ma": 827,
+    "above200ma": 828,
     "total": 1975
   },
   {
     "date": "2025-12-04",
     "above50ma": 849,
-    "above200ma": 828,
+    "above200ma": 829,
     "total": 1974
   },
   {
@@ -1100,7 +1100,7 @@
   {
     "date": "2025-12-19",
     "above50ma": 840,
-    "above200ma": 854,
+    "above200ma": 855,
     "total": 1975
   },
   {
@@ -1117,7 +1117,7 @@
   },
   {
     "date": "2025-12-24",
-    "above50ma": 914,
+    "above50ma": 915,
     "above200ma": 874,
     "total": 1976
   },
@@ -1190,7 +1190,7 @@
   {
     "date": "2026-01-13",
     "above50ma": 1067,
-    "above200ma": 980,
+    "above200ma": 981,
     "total": 1976
   },
   {
@@ -1399,7 +1399,7 @@
   },
   {
     "date": "2026-03-13",
-    "above50ma": 768,
+    "above50ma": 767,
     "above200ma": 903,
     "total": 1978
   },
@@ -1945,25 +1945,25 @@
   },
   {
     "date": "2026-07-20",
-    "above50ma": 622,
+    "above50ma": 624,
     "above200ma": 927,
     "total": 1979
   },
   {
     "date": "2026-07-21",
-    "above50ma": 732,
-    "above200ma": 1003,
+    "above50ma": 735,
+    "above200ma": 1004,
     "total": 1979
   },
   {
     "date": "2026-07-22",
-    "above50ma": 753,
-    "above200ma": 1012,
+    "above50ma": 755,
+    "above200ma": 1013,
     "total": 1979
   },
   {
     "date": "2026-07-23",
-    "above50ma": 744,
+    "above50ma": 745,
     "above200ma": 999,
     "total": 1979
   },
@@ -1999,134 +1999,140 @@
   },
   {
     "date": "2026-07-31",
-    "above50ma": 478,
+    "above50ma": 481,
     "above200ma": 791,
     "total": 1979
   },
   {
     "date": "2026-08-03",
-    "above50ma": 498,
-    "above200ma": 848,
+    "above50ma": 501,
+    "above200ma": 849,
     "total": 1979
   },
   {
     "date": "2026-08-04",
-    "above50ma": 529,
-    "above200ma": 904,
+    "above50ma": 532,
+    "above200ma": 905,
     "total": 1979
   },
   {
     "date": "2026-08-05",
-    "above50ma": 593,
-    "above200ma": 947,
+    "above50ma": 595,
+    "above200ma": 948,
     "total": 1979
   },
   {
     "date": "2026-08-06",
-    "above50ma": 619,
-    "above200ma": 962,
+    "above50ma": 621,
+    "above200ma": 963,
     "total": 1979
   },
   {
     "date": "2026-08-07",
-    "above50ma": 653,
-    "above200ma": 971,
+    "above50ma": 655,
+    "above200ma": 972,
     "total": 1979
   },
   {
     "date": "2026-08-10",
-    "above50ma": 753,
-    "above200ma": 1028,
+    "above50ma": 755,
+    "above200ma": 1029,
     "total": 1979
   },
   {
     "date": "2026-08-11",
-    "above50ma": 736,
-    "above200ma": 1019,
+    "above50ma": 738,
+    "above200ma": 1020,
     "total": 1979
   },
   {
     "date": "2026-08-12",
-    "above50ma": 784,
-    "above200ma": 1046,
+    "above50ma": 786,
+    "above200ma": 1047,
     "total": 1979
   },
   {
     "date": "2026-08-13",
-    "above50ma": 784,
-    "above200ma": 1027,
+    "above50ma": 786,
+    "above200ma": 1028,
     "total": 1979
   },
   {
     "date": "2026-08-14",
-    "above50ma": 753,
-    "above200ma": 999,
-    "total": 1979
-  },
-  {
-    "date": "2026-08-17",
-    "above50ma": 783,
-    "above200ma": 1007,
-    "total": 1979
-  },
-  {
-    "date": "2026-08-18",
-    "above50ma": 703,
-    "above200ma": 967,
-    "total": 1979
-  },
-  {
-    "date": "2026-08-19",
-    "above50ma": 669,
-    "above200ma": 966,
-    "total": 1979
-  },
-  {
-    "date": "2026-08-20",
-    "above50ma": 758,
+    "above50ma": 754,
     "above200ma": 1000,
     "total": 1979
   },
   {
+    "date": "2026-08-17",
+    "above50ma": 784,
+    "above200ma": 1008,
+    "total": 1979
+  },
+  {
+    "date": "2026-08-18",
+    "above50ma": 706,
+    "above200ma": 969,
+    "total": 1979
+  },
+  {
+    "date": "2026-08-19",
+    "above50ma": 672,
+    "above200ma": 970,
+    "total": 1979
+  },
+  {
+    "date": "2026-08-20",
+    "above50ma": 762,
+    "above200ma": 1003,
+    "total": 1979
+  },
+  {
     "date": "2026-08-21",
-    "above50ma": 821,
-    "above200ma": 1026,
+    "above50ma": 825,
+    "above200ma": 1029,
     "total": 1979
   },
   {
     "date": "2026-08-24",
-    "above50ma": 766,
-    "above200ma": 996,
+    "above50ma": 769,
+    "above200ma": 999,
     "total": 1978
   },
   {
     "date": "2026-08-25",
-    "above50ma": 774,
-    "above200ma": 990,
+    "above50ma": 777,
+    "above200ma": 994,
     "total": 1978
   },
   {
     "date": "2026-08-26",
-    "above50ma": 884,
-    "above200ma": 1041,
+    "above50ma": 888,
+    "above200ma": 1044,
     "total": 1978
   },
   {
     "date": "2026-08-27",
-    "above50ma": 914,
-    "above200ma": 1063,
+    "above50ma": 918,
+    "above200ma": 1066,
     "total": 1978
   },
   {
     "date": "2026-08-28",
-    "above50ma": 888,
-    "above200ma": 1048,
-    "total": 1970
+    "above50ma": 899,
+    "above200ma": 1059,
+    "total": 1978
   },
   {
     "date": "2026-08-31",
-    "above50ma": 889,
-    "above200ma": 1049,
-    "total": 1948
+    "above50ma": 865,
+    "above200ma": 1039,
+    "total": 1973
+  },
+  {
+    "date": "2026-09-01",
+    "above50ma": 882,
+    "above200ma": 1038,
+    "total": 1955
   }
 ]
